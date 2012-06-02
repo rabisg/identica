@@ -1,0 +1,53 @@
+<?php
+/**
+ * @file
+ * Provides Oauth Integration for Identi.ca
+ */
+
+/**
+ * Implements hook_menu()
+ */
+function identica_menu() {
+  $items['identica/oauth'] = array(
+    'title' => 'Identi.ca Callback',
+    'access callback' => TRUE,
+    'page callback' => 'identica_oauth_callback',
+    'file' => 'identica.pages.inc',
+  );
+  $items['admin/config/services/identica'] = array(
+    'title' => 'Identica',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('identica_settings'),
+    'file' => 'identica.pages.inc',
+  );
+  $items['user/%user/edit/identica'] = array(
+    'title' => 'Identi.ca Account',
+    'page callback' => 'identica_user_settings',
+    'page arguments' => array(1),
+    'access arguments' => array('add identica account'),
+    'file' => 'identica.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function identica_permission() {
+  return array(
+    'add identica account' => array(
+      'title' => t('Add Identica accounts'),
+      'description' => t('Controls who can add Identi.ca Accounts and Post from this website'),
+    ),
+  );
+}
+
+/**
+ * Helper function for returning Identica account object
+ * based on uid
+ */
+function _get_identica_account($uid) {
+  return NULL;
+}

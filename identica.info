@@ -1,0 +1,7 @@
+;$Id$
+name = Identica
+description = Provides OAuth interface and helper methods for integrating with Identi.ca
+version = 7.x-1.xdev
+package = Web Services
+core = 7.x
+files[] = identica.lib.php
