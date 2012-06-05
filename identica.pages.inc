@@ -5,8 +5,6 @@
  * Provides page builder functions
  */
 
-define('CONSUMER_KEY', variable_get('identica_consumer_key', ''));
-define('CONSUMER_SECRET', variable_get('identica_consumer_secret', ''));
 /**
  * Form  builder for Admin Panel
  */
@@ -46,7 +44,7 @@ function identica_settings($form, &$form_state) {
  * Form validator identica_settings
  */
 function identica_settings_validate($form, &$form_state) {
-  if(!empty($form_state['values']['identica_fedora']) && _get_identica_account($form_state['values']['identica_fedora'])==NULL)
+  if(!empty($form_state['values']['identica_fedora']) && load_identica_user(user_load_by_name($form_state['values']['identica_fedora'])->uid)==NULL)
     form_set_error('identica_fedora', t('Either no Identi.ca account is asscoiated with the username or the username does not exist.'));
 }
 

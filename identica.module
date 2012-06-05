@@ -4,6 +4,9 @@
  * Provides Oauth Integration for Identi.ca
  */
 
+define('CONSUMER_KEY', variable_get('identica_consumer_key', ''));
+define('CONSUMER_SECRET', variable_get('identica_consumer_secret', ''));
+
 /**
  * Implements hook_menu()
  */
@@ -58,4 +61,25 @@ function load_identica_user($uid) {
   if($values)
     return new IdenticaUser($values);
   return NULL;
+}
+
+function identica_post_as_admin($text = '') {
+  module_load_include('php', 'identica', 'twitteroauth/twitteroauth');
+  $user = variable_get('identica_fedora', '');
+  if(!$user)
+    return;
+  try {
+    $uid = user_load_by_name($user)->uid;
+    $account = load_identica_user($uid);
+    $access_token = $account->get_auth();
+    $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, $access_token['oauth_token'], $access_token['oauth_token_secret']);
+    $connection->post('statuses/update', array('status' => $text));
+    if (200 != $connection->http_code)
+      return FALSE;
+  }
+  catch(Exception $e) {
+    drupal_set_message("Invalid User Name or User does not have an associated Identi.ca account", "error");
+    return FALSE;
+  }
+  return TRUE;
 }
