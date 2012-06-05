@@ -1,0 +1,111 @@
+<?php
+
+/**
+ * @file
+ * Installation and schema related functions for the Identi.ca module
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function identica_schema() {
+  $schema['identica_oauth'] = array(
+    'description' => 'Table for OAuth token/secret for Insight users',
+    'fields' => array(
+      'uid' => array(
+        'description' => 'The Drupal UID of the user.',
+        'type' => 'int',
+        'length' => 10,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'oauth_token' => array(
+        'description' => 'The OAuth Token for the User.',
+        'type'        => 'varchar',
+        'length'      => 32,
+        'not null'    => TRUE,
+      ),
+      'oauth_token_secret' => array(
+        'description' => 'The OAuth Token Secret for the User.',
+        'type'        => 'varchar',
+        'length'      => 32,
+        'not null'    => TRUE,
+      ),
+      'timestamp'  => array(
+        'description' => 'Timestamp.',
+        'type'        => 'int',
+        'length'      => 10,
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ),
+    ),
+    'primary key' => array('uid'),
+  );
+  $schema['identica_users'] = array(
+    'description' => 'Identica User Info',
+    'fields' => array(
+      'uid' => array(
+        'description' => 'The Drupal UID of the user whose information is stored here.',
+        'type'        => 'int',
+        'length'      => 10,
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ),
+      'id' => array(
+        'description' => 'Identi.ca Id of the user.',
+        'type'        => 'varchar',
+        'length'      => 32,
+        'not null'    => TRUE,
+      ),
+      'screen_name' => array(
+        'description' => 'Identi.ca screen name',
+        'type'        => 'varchar',
+        'length'      => 32,
+        'not null'    => TRUE,
+      ),
+      'name' => array(
+        'description' => 'Name of the user',
+        'type'        => 'varchar',
+        'length'      => 32,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'location' => array(
+        'type'        => 'varchar',
+        'not null'    => TRUE,
+        'length'      => 255,
+        'default'     => '',
+      ),
+      'description' => array(
+        'description' => 'Description for the user',
+        'type'        => 'varchar',
+        'length'      => 140,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'profile_image_url' => array(
+        'description' => 'Link to Profile Image of this User',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'created_at' => array(
+        'description' => 'Time of creation of Identi.ca Account',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+      'profile_url' => array(
+        'description' => 'Profile URL of Identi.ca Account',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => '',
+      ),
+    ),
+    'primary key' => array('uid'),
+  );
+  return $schema;
+}
