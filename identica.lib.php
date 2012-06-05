@@ -7,6 +7,8 @@
 
 class IdenticaUser {
 
+  public $uid;
+
   public $id;
 
   public $screen_name;
@@ -17,36 +19,32 @@ class IdenticaUser {
 
   public $description;
 
-  public $url;
-
   public $profile_image_url;
 
   public $created_at;
 
-  public $created_time;
+  public $profile_url;
 
   protected $oauth_token;
 
   protected $oauth_token_secret;
 
-  public function __construct($values = array()) {
+  public function __construct($values=array()) {
+    $this->uid = $values['uid'];
     $this->id = $values['id'];
     $this->screen_name = $values['screen_name'];
     $this->name = $values['name'];
     $this->location = $values['location'];
     $this->description = $values['description'];
-    $this->url = $values['url'];
+    $this->profile_image_url = $values['profile_image_url'];
     $this->created_at = $values['created_at'];
-    if ($values['created_at'] && $created_time = strtotime($values['created_at'])) {
-      $this->created_time = $created_time;
-    }
-    $this->utc_offset = $values['utc_offset']?$values['utc_offset']:0;
     $this->oauth_token = $values['oauth_token'];
     $this->oauth_token_secret = $values['oauth_token_secret'];
-  }
-
-  public function get_auth() {
-    return array('oauth_token' => $this->oauth_token, 'oauth_token_secret' => $this->oauth_token_secret);
-  }
+    $this->profile_url = $values['profile_url'];
+ }
+ 
+ public function get_auth() {
+   return array('oauth_token' => $this->oauth_token, 'oauth_token_secret' => $this->oauth_token_secret);
+ }
 
 }

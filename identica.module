@@ -9,7 +9,6 @@
  */
 function identica_menu() {
   $items['identica/oauth'] = array(
-    'title' => 'Identi.ca Callback',
     'access callback' => TRUE,
     'page callback' => 'identica_oauth_callback',
     'file' => 'identica.pages.inc',
@@ -48,6 +47,15 @@ function identica_permission() {
  * Helper function for returning Identica account object
  * based on uid
  */
-function _get_identica_account($uid) {
+function load_identica_user($uid) {
+  $query = db_select('identica_oauth', 'o');
+  $query->join('identica_users', 'u', 'o.uid = u.uid');
+  $query->condition('u.uid', $uid, '=');
+  $query->fields('o')
+    ->fields('u');
+
+  $values = $query->execute()->fetchAssoc();
+  if($values)
+    return new IdenticaUser($values);
   return NULL;
 }

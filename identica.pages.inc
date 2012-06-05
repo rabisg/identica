@@ -57,9 +57,11 @@ function identica_user_settings($uid) {
   global $user;
   if(!$uid)
     $uid = $user->uid;
-  if(($account = _get_identica_account($uid))!=NULL) {
+  else $uid = $uid->uid;
+  $account = load_identica_user($uid);
+  if($account) {
     // Display the current account details
-    // $output['details'] = 
+    //$output['details'] = 
     $output['form'] = drupal_get_form('identica_add_account_form' , $uid, TRUE);
   }
   else {
@@ -75,14 +77,15 @@ function identica_user_settings($uid) {
  * accountExists Denotes whether an account is already associated with the user or not
  *               If yes, then adds a Remove Button accordingly
  */
-function identica_add_account_form($form, &$form_state, $user, $accountExists=FALSE) {
+function identica_add_account_form($form, &$form_state, $uid, $accountExists=FALSE) {
   $form['uid'] = array(
     '#type' => 'value',
-    '#value' => $user->uid,
+    '#value' => $uid,
   );
   $form['add_account'] = array(
     '#type' => 'submit',
     '#value' => $accountExists ? t('Change Existing Account') : t('Add New Account'),
+    '#validate' => array('identica_add_account_validate'),
   );
   if($accountExists) {
     $form['remove_account'] = array(
@@ -99,7 +102,7 @@ function identica_add_account_form($form, &$form_state, $user, $accountExists=FA
  * Intercept submission of 'Add Account' form on
  * user/%/edit/identica page and redirect to Identica for auth. 
  */
-function identica_add_account_form_validate($form, &$form_state) {
+function identica_add_account_validate($form, &$form_state) {
   if (CONSUMER_KEY == '' || CONSUMER_SECRET == '') {
     form_set_error('', t('Please configure Identica consumer key and secret.'));
   }
@@ -136,10 +139,12 @@ function identica_add_account_form_validate($form, &$form_state) {
  */
 function identica_remove_account_submit($form, &$form_state) {  
   $uid = $form_state['values']['uid'];
-  if(_get_identica_account($uid)!=NULL) {
-    ;
-    //delete entry
-  }
+  db_delete('identica_oauth')
+  ->condition('uid', $uid, '=')
+  ->execute();
+  db_delete('identica_users')
+  ->condition('uid', $uid, '=')
+  ->execute();
 }
 
 /**
@@ -166,22 +171,77 @@ function identica_oauth_callback() {
   /* Request access tokens from twitter */
   $access_token = $connection->getAccessToken($_REQUEST['oauth_verifier']);
 
- 
-  /* Remove no longer needed request tokens */
-  //unset($_SESSION['identica']['oauth_token']);
-  //unset($_SESSION['identica']['oauth_token_secret']);
-
   /* If HTTP response is 200 continue otherwise send to connect page to retry */
   if (200 == $connection->http_code) {
-    /* The user has been verified and the access tokens can be saved for future use */
-    $content = '<h2>Authentication has been succesful</h2>';
-    /* Create a TwitterOauth object with consumer/user tokens. */
-    $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, $access_token['oauth_token'], $access_token['oauth_token_secret']);
+
+  $content = '<h1>Authentication has been succesful</h1>';
+  /* Create a TwitterOauth object with consumer/user tokens. */
+  $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, $access_token['oauth_token'], $access_token['oauth_token_secret']);
+  $credentials = $connection->get('account/verify_credentials');
+  /* The user has been verified and the access tokens can be saved for future use */
+  $account = load_identica_user($uid);
+  if(!$account) { 
+      //Save OAuth Token and OAuth Token Secret
+      db_insert('identica_oauth')
+      ->fields(array(
+        'uid' => $_SESSION['identica']['uid'],
+        'oauth_token' => $access_token['oauth_token'],
+        'oauth_token_secret' => $access_token['oauth_token_secret'],
+        'timestamp' => REQUEST_TIME,
+      ))
+      ->execute();
+
+     //Save User Data into Identica User Table
+     db_insert('identica_users')
+      ->fields(array(
+        'uid' => $_SESSION['identica']['uid'],
+        'id' => $credentials->id,
+        'screen_name' => $credentials->screen_name,
+        'name' => $credentials->name ? $credentials->name : '',
+        'description' => $credentials->description ? $credentials->description : '',
+        'location' => $credentials->location ? $credentials->location : '',
+        'profile_image_url' => $credentials->profile_image_url ? $credentials->profile_image_url : '',
+        'created_at' => $credentials->created_at,
+        'profile_url' => $credentials->statusnet_profile_url,
+        ))
+      ->execute();
+
+    }
+    else {
+      db_update('identica_oauth')
+      ->fields(array(
+        'oauth_token' => $access_token['oauth_token'],
+        'oauth_token_secret' => $access_token['oauth_token_secret'],
+        'timestamp' => REQUEST_TIME,
+      ))
+      ->condition('uid', $_SESSION['identica']['uid'], '=')
+      ->execute();
+
+      db_update('identica_users')
+      ->fields(array(
+        'uid' => $_SESSION['identica']['uid'],
+        'id' => $credentials->id,
+        'screen_name' => $credentials->screen_name,
+        'name' => $credentials->name ? $credentials->name : '',
+        'description' => $credentials->description ? $credentials->description : '',
+        'location' => $credentials->location ? $credentials->location : '',
+        'profile_image_url' => $credentials->profile_image_url ? $credentials->profile_image_url : '',
+        'created_at' => $credentials->created_at,
+        'profile_url' => $credentials->statusnet_profile_url,
+        ))
+      ->condition('uid', $_SESSION['identica']['uid'], '=')
+      ->execute();
+    }
     /* If method is set change API call made. Test is called by default. */
-    $content .= $connection->get('account/verify_credentials');
-  } else {
-    /* Save HTTP status for error dialog on connnect page.*/
-    $content = '<h2>Authentication has not been succesful</h2>';
+    $content .= print_r($connection->get('account/verify_credentials'), TRUE);
   }
+  else {
+    /* Save HTTP status for error dialog on connnect page.*/
+    $content = '<h1>Authentication has not been succesful</h1>';
+    $content .= l('Try again', url('user/' . $uid . '/edit/identica', array('absolute' => TRUE)));
+  }
+  /* Remove no longer needed request tokens */
+  unset($_SESSION['identica']);
+
   return $content;
 }

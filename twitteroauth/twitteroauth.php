@@ -25,8 +25,8 @@ class TwitterOAuth {
   public $connecttimeout = 30; 
   /* Verify SSL Cert. */
   public $ssl_verifypeer = FALSE;
-  /* Respons format. Identi.ca seems to be working with xml but not json*/
-  public $format = 'xml';
+  /* Respons format. Identi.ca sometimes seem to be working with xml but not json*/
+  public $format = 'json';
   /* Decode returned json data. */
   public $decode_json = TRUE;
   /* Contains the last HTTP headers returned. */
