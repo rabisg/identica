@@ -44,7 +44,7 @@ function identica_settings($form, &$form_state) {
  * Form validator identica_settings
  */
 function identica_settings_validate($form, &$form_state) {
-  if(!empty($form_state['values']['identica_fedora']) && load_identica_user(user_load_by_name($form_state['values']['identica_fedora'])->uid)==NULL)
+  if (!empty($form_state['values']['identica_fedora']) && load_identica_user(user_load_by_name($form_state['values']['identica_fedora'])->uid) == NULL)
     form_set_error('identica_fedora', t('Either no Identi.ca account is asscoiated with the username or the username does not exist.'));
 }
 
@@ -53,11 +53,11 @@ function identica_settings_validate($form, &$form_state) {
  */
 function identica_user_settings($uid) {
   global $user;
-  if(!$uid)
+  if (!$uid)
     $uid = $user->uid;
   else $uid = $uid->uid;
   $account = load_identica_user($uid);
-  if($account) {
+  if ($account) {
     // Display the current account details
     //$output['details'] = 
     $output['form'] = drupal_get_form('identica_add_account_form' , $uid, TRUE);
@@ -75,17 +75,17 @@ function identica_user_settings($uid) {
  * accountExists Denotes whether an account is already associated with the user or not
  *               If yes, then adds a Remove Button accordingly
  */
-function identica_add_account_form($form, &$form_state, $uid, $accountExists=FALSE) {
+function identica_add_account_form($form, &$form_state, $uid, $account_exists=FALSE) {
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $uid,
   );
   $form['add_account'] = array(
     '#type' => 'submit',
-    '#value' => $accountExists ? t('Change Existing Account') : t('Add New Account'),
+    '#value' => $account_exists ? t('Change Existing Account') : t('Add New Account'),
     '#validate' => array('identica_add_account_validate'),
   );
-  if($accountExists) {
+  if ($account_exists) {
     $form['remove_account'] = array(
       '#type' => 'submit',
       '#value' => t('Remove Account'),
@@ -155,7 +155,7 @@ function identica_oauth_callback() {
 
   global $user;
   $uid = $_SESSION['identica']['uid'];
-  if(!$uid)
+  if (!$uid)
     $uid = $user->uid;
 
   /* If the oauth_token is old redirect to the connect page. */
@@ -178,7 +178,7 @@ function identica_oauth_callback() {
   $credentials = $connection->get('account/verify_credentials');
   /* The user has been verified and the access tokens can be saved for future use */
   $account = load_identica_user($uid);
-  if(!$account) { 
+  if (!$account) { 
       //Save OAuth Token and OAuth Token Secret
       db_insert('identica_oauth')
       ->fields(array(
@@ -236,7 +236,7 @@ function identica_oauth_callback() {
   else {
     /* Save HTTP status for error dialog on connnect page.*/
     $content = '<h1>Authentication has not been succesful</h1>';
-    $content .= l('Try again', url('user/' . $uid . '/edit/identica', array('absolute' => TRUE)));
+    $content .= l(t('Try again'), url('user/' . $uid . '/edit/identica', array('absolute' => TRUE)));
   }
   /* Remove no longer needed request tokens */
   unset($_SESSION['identica']);

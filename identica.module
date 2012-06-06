@@ -58,7 +58,7 @@ function load_identica_user($uid) {
     ->fields('u');
 
   $values = $query->execute()->fetchAssoc();
-  if($values)
+  if ($values)
     return new IdenticaUser($values);
   return NULL;
 }
@@ -66,7 +66,7 @@ function load_identica_user($uid) {
 function identica_post_as_admin($text = '') {
   module_load_include('php', 'identica', 'twitteroauth/twitteroauth');
   $user = variable_get('identica_fedora', '');
-  if(!$user)
+  if (!$user)
     return;
   try {
     $uid = user_load_by_name($user)->uid;
@@ -77,8 +77,8 @@ function identica_post_as_admin($text = '') {
     if (200 != $connection->http_code)
       return FALSE;
   }
-  catch(Exception $e) {
-    drupal_set_message("Invalid User Name or User does not have an associated Identi.ca account", "error");
+  catch (Exception $e) {
+    drupal_set_message(t("Invalid User Name or User does not have an associated Identi.ca account"), "error");
     return FALSE;
   }
   return TRUE;
