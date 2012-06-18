@@ -23,14 +23,6 @@ function identica_menu() {
     'page arguments' => array('identica_settings'),
     'file' => 'identica.pages.inc',
   );
-  $items['user/%user/edit/identica'] = array(
-    'title' => 'Identi.ca Account',
-    'page callback' => 'identica_user_settings',
-    'page arguments' => array(1),
-    'access arguments' => array('add identica account'),
-    'file' => 'identica.pages.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
   return $items;
 }
 
@@ -44,6 +36,103 @@ function identica_permission() {
       'description' => t('Controls who can add Identi.ca Accounts and Post from this website'),
     ),
   );
+}
+
+/**
+ * Implements hoook_form_FORM_ID_alter()
+ */
+function identica_form_user_profile_form_alter(&$form, $form_state) {
+  $form['identica'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Identi.ca Account'),
+    '#collapsible' => TRUE, 
+  );  
+  $account = load_identica_user($form_state['user']->uid);
+  if ($account) {
+    $variables = array(
+      'path' => $account->profile_image_url, 
+      'alt' => $account->screen_name,
+      'title' => $account->screen_name,
+      'attributes' => array('class' => 'identica-user-picture'),
+      );
+    $user_display = '<div class="identica-user">';
+    $user_display .= theme('image', $variables);
+    $user_display .= '<h3><a href="' . $account->profile_url . '">' . $account->name . '</a>&nbsp;' . $account->screen_name . '</h3></div>';
+    $form['identica']['account'] = array(
+      '#markup' => $user_display,      
+    );
+    $form['identica']['add_account'] = array(
+      '#type' => 'submit',
+      '#value' => t('Change Existing Account'),
+      '#validate' => array('identica_add_account_validate'),
+    );
+    $form['identica']['remove_account'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove Account'),
+      '#submit' => array('identica_remove_account_submit'),
+    );
+  }
+  else {
+    $form['identica']['no_account'] = array(
+      '#type' => 'item',
+      '#title' => t('You do not have an associated <a href="http://identi.ca">Identi.ca</a> account.'),
+      '#description' => t('Create one now to Favourite, Repeat Notices and Post to Identi.ca directly'),
+    );
+    $form['identica']['add_account'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add an Account'),
+      '#validate' => array('identica_add_account_validate'),
+    );
+  }
+}
+/**
+ * Implements FORM_ID_validate
+ * Intercept submission of 'Add Account' form on
+ * user/%/edit/identica page and redirect to Identica for auth. 
+ */
+function identica_add_account_validate($form, &$form_state) {
+  if (CONSUMER_KEY == '' || CONSUMER_SECRET == '') {
+    form_set_error('', t('Please configure Identica consumer key and secret.'));
+  }
+
+  module_load_include('php', 'identica', 'twitteroauth/twitteroauth');
+  $oauth_callback = url('identica/oauth', array('absolute' => TRUE));
+  /* Build TwitterOAuth object with client credentials. */
+  $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET);
+ 
+  /* Get temporary credentials. */
+  $request_token = $connection->getRequestToken($oauth_callback);
+  $token = $request_token['oauth_token'];
+  
+  /* Save temporary credentials to session. */
+  $_SESSION['identica']['oauth_token'] = $token = $request_token['oauth_token'];
+  $_SESSION['identica']['oauth_token_secret'] = $request_token['oauth_token_secret'];
+  $_SESSION['identica']['uid'] = $form_state['user']->uid;
+ 
+  /* If last connection failed don't display authorization link. */
+  switch ($connection->http_code) {
+    case 200:
+      /* Build authorize URL and redirect user to Identi.ca. */
+      $url = $connection->getAuthorizeURL($token);
+      drupal_goto($url); 
+      break;
+    default:
+      /* Show notification if something went wrong. */
+      form_set_error('', t('Could not connect to Identi.ca. Refresh the page or try again later.'));
+  }
+}
+
+/**
+ * Submit function for removing accounts
+ */
+function identica_remove_account_submit($form, &$form_state) {  
+  $uid = $form_state['user']->uid;
+  db_delete('identica_oauth')
+  ->condition('uid', $uid, '=')
+  ->execute();
+  db_delete('identica_users')
+  ->condition('uid', $uid, '=')
+  ->execute();
 }
 
 /**

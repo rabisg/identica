@@ -48,102 +48,6 @@ function identica_settings_validate($form, &$form_state) {
     form_set_error('identica_fedora', t('Either no Identi.ca account is asscoiated with the username or the username does not exist.'));
 }
 
-/**
- * Page builder function to allow users to add Identi.ca accounts
- */
-function identica_user_settings($uid) {
-  global $user;
-  if (!$uid)
-    $uid = $user->uid;
-  else $uid = $uid->uid;
-  $account = load_identica_user($uid);
-  if ($account) {
-    // Display the current account details
-    //$output['details'] = 
-    $output['form'] = drupal_get_form('identica_add_account_form' , $uid, TRUE);
-  }
-  else {
-    $output['form'] = drupal_get_form('identica_add_account_form' , $uid, FALSE);
-  }
-  return $output;
-}
-
-/**
- * Form  builder for Adding/Removing Identi.ca accounts
- * @params
- * uid The User Id of the person whose Identi.ca account is added
- * accountExists Denotes whether an account is already associated with the user or not
- *               If yes, then adds a Remove Button accordingly
- */
-function identica_add_account_form($form, &$form_state, $uid, $account_exists=FALSE) {
-  $form['uid'] = array(
-    '#type' => 'value',
-    '#value' => $uid,
-  );
-  $form['add_account'] = array(
-    '#type' => 'submit',
-    '#value' => $account_exists ? t('Change Existing Account') : t('Add New Account'),
-    '#validate' => array('identica_add_account_validate'),
-  );
-  if ($account_exists) {
-    $form['remove_account'] = array(
-      '#type' => 'submit',
-      '#value' => t('Remove Account'),
-      '#submit' => array('identica_remove_account_submit'),
-    );
-  }
-  return $form;
-}
-
-/**
- * Implements FORM_ID_validate
- * Intercept submission of 'Add Account' form on
- * user/%/edit/identica page and redirect to Identica for auth. 
- */
-function identica_add_account_validate($form, &$form_state) {
-  if (CONSUMER_KEY == '' || CONSUMER_SECRET == '') {
-    form_set_error('', t('Please configure Identica consumer key and secret.'));
-  }
-
-  module_load_include('php', 'identica', 'twitteroauth/twitteroauth');
-  $oauth_callback = url('identica/oauth', array('absolute' => TRUE));
-  /* Build TwitterOAuth object with client credentials. */
-  $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET);
- 
-  /* Get temporary credentials. */
-  $request_token = $connection->getRequestToken($oauth_callback);
-  $token = $request_token['oauth_token'];
-  
-  /* Save temporary credentials to session. */
-  $_SESSION['identica']['oauth_token'] = $token = $request_token['oauth_token'];
-  $_SESSION['identica']['oauth_token_secret'] = $request_token['oauth_token_secret'];
-  $_SESSION['identica']['uid'] = $form_state['values']['uid'];
- 
-  /* If last connection failed don't display authorization link. */
-  switch ($connection->http_code) {
-    case 200:
-      /* Build authorize URL and redirect user to Identi.ca. */
-      $url = $connection->getAuthorizeURL($token);
-      drupal_goto($url); 
-      break;
-    default:
-      /* Show notification if something went wrong. */
-      form_set_error('', t('Could not connect to Identi.ca. Refresh the page or try again later.'));
-  }
-}
-
-/**
- * Submit function for removing accounts
- */
-function identica_remove_account_submit($form, &$form_state) {  
-  $uid = $form_state['values']['uid'];
-  db_delete('identica_oauth')
-  ->condition('uid', $uid, '=')
-  ->execute();
-  db_delete('identica_users')
-  ->condition('uid', $uid, '=')
-  ->execute();
-}
 
 /**
  * Callback page for OAuth Requests
@@ -230,8 +134,7 @@ function identica_oauth_callback() {
       ->condition('uid', $_SESSION['identica']['uid'], '=')
       ->execute();
     }
-    /* If method is set change API call made. Test is called by default. */
-    $content .= print_r($connection->get('account/verify_credentials'), TRUE);
+   $content .= t('<a href="@1">Click here to view your profile</a>', array('@1' => url('user/' . $uid . '/edit/identica', array('absolute' => TRUE))));
   }
   else {
     /* Save HTTP status for error dialog on connnect page.*/
