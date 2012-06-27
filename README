@@ -1,0 +1,42 @@
+This project was developed as a part of GOOGLE SUMMER OF CODE '12
+@author: Rabi Shanker Guha(rabisg)
+Mentor: Peter Borsa(asrob)
+
+This module provides the back-end for integrating with Identi.ca.
+It uses Abraham Williams' Twitter OAuth library
+(https://github.com/abraham/twitteroauth) at its backend.
+and is heavily inspired from Twitter module.
+For use cases refer to
+https://fedoraproject.org/wiki/Insight_use_cases_for_status_and_microblogging
+
+HOW TO USE THIS MODULE
+
+1. First register your ap on http://identi.ca/settings/oauthapps/new
+and provide OAuth Consumer Key and Consumer Secret.
+(leave the other field blank for now)
+
+2. On enabling this module it adds a Identica fieldset to user
+profile form(user/%user/edit). Click on 'Add an Account' to grant
+access to your Identi.ca account. Now your Identi.ca account is
+linked to your Drupal account and other modules can use it to post
+messages, etc.
+
+The Use Cases also specify that users should be able to post to Identi.ca
+directly through this website. While the implementation for it is in a
+different module (insight_status) this module provides the helper function
+for posting to Identi.ca as Fedora
+And the "Fedora's Identi.ca Account" textbox on the config page expects
+the Drupal username of the user from whose account Fedora's account on
+Identi.ca is linked
+
+The following steps enumerate how to configure it:
+a. Login to Identi.ca as Fedora.
+b. Log in to any Drupal account on Insight (lets say rabisg).
+c. Go to profile/edit and click on "Add an Account" under Identi.ca.
+d. Grant permission(as Fedora). Now you would see Fedora's account linked
+   in rabisg's Drupal account.
+e. Now type in the username(rabisg in this case) into
+   "Fedora's Identi.ca Account" textbox on the config page(admin/config/services/identica).
+
+Feel free to post your suggestions/feedback.
+Bugs related to Twitter library should be posted there.
