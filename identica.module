@@ -18,6 +18,7 @@ function identica_menu() {
   );
   $items['admin/config/services/identica'] = array(
     'title' => 'Identica',
+    'description' => 'Integration with identi.ca',
     'access arguments' => array('administer site configuration'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('identica_settings'),
